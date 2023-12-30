@@ -2,23 +2,23 @@ import html
 import json
 import re
 from copy import deepcopy
-
+from datetime import datetime
 from .types import (
     Account,
     Collection,
     Comment,
     DirectMedia,
+    Guide,
     DirectMessage,
     DirectResponse,
     DirectShortThread,
     DirectThread,
-    Guide,
     Hashtag,
     Highlight,
     Location,
     Media,
-    MediaOembed,
     MediaXma,
+    MediaOembed,
     ReplyMessage,
     Resource,
     Story,
@@ -275,6 +275,7 @@ def extract_direct_thread(data):
     if "inviter" in data:
         data["inviter"] = extract_user_short(data["inviter"])
     data["left_users"] = data.get("left_users", [])
+    data["last_activity_at"] = datetime.fromtimestamp(data["last_activity_at"] // 1_000_000)
     return DirectThread(**data)
 
 
@@ -303,6 +304,8 @@ def extract_reply_message(data):
             # Instagram ¯\_(ツ)_/¯
             clip = clip.get("clip")
         data["clip"] = extract_media_v1(clip)
+    data["user_id"] = str(data["user_id"])
+    data["timestamp"] = datetime.fromtimestamp(data["timestamp"] // 1_000_000)
     return ReplyMessage(**data)
 
 
@@ -330,6 +333,11 @@ def extract_direct_message(data):
     if xma_media_share:
         data["xma_share"] = extract_media_v1_xma(xma_media_share[0])
 
+    if type(data['timestamp']) is str:
+        data['timestamp'] = int(data['timestamp'])
+    data['timestamp'] = datetime.fromtimestamp(data['timestamp'] // 1_000_000)
+    if 'user_id' in data:
+        data['user_id'] = str(data['user_id'])
     return DirectMessage(**data)
 
 
